@@ -1,9 +1,9 @@
 public class Serial {
     static int size;
     static int[] SortArray = new int[size];
-    public Serial(int size, int[] baseArray) {
-        this.size = size;
+    public Serial(int[] baseArray) {
         SortArray = baseArray.clone();
+        size = SortArray.length;
     }   
 
     //estrutura basica das funções:
@@ -11,7 +11,7 @@ public class Serial {
     //  2. logica do algoritmo
     //  3. retorna o novo array
 
-    public static int[] BubbleSort(){
+    public static int[] bubbleSort(){
         int[] resultArray = SortArray.clone();
 
         int swap;
@@ -28,19 +28,19 @@ public class Serial {
         return resultArray;
     }
 
-    public static int[] MergeSort(){
+    public static int[] mergeSort(){
         int[] resultArray = SortArray.clone();
 
-        mergeS(SortArray, 0, size/2);
+        mergeSort(SortArray, 0, size/2);
         
         return resultArray;
     }    
 
-    private static void mergeS(int[] array, int left, int right){
+    private static void mergeSort(int[] array, int left, int right){
         if (left < right) {
             int mid = left + (right - left) / 2;
-            mergeS(array, left, mid);
-            mergeS(array, mid + 1, right);
+            mergeSort(array, left, mid);
+            mergeSort(array, mid + 1, right);
             merge(array, left, mid, right);
         }
     }
@@ -72,16 +72,16 @@ public class Serial {
     public static int[] quickSort(){
         int[] resultArray = SortArray.clone();
 
-        quickS(resultArray, 0, size - 1);
+        quickSort(resultArray, 0, size - 1);
         
         return resultArray;
     }
 
-    private static void quickS(int[] array, int low, int high){
+    private static void quickSort(int[] array, int low, int high){
         if (low<high) {
             int pi = partitioning(array, low, high);
-            quickS(array, low, pi - 1);
-            quickS(array, pi + 1 ,high);
+            quickSort(array, low, pi - 1);
+            quickSort(array, pi + 1 ,high);
         }
     }
 
