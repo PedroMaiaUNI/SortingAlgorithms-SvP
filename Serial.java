@@ -28,6 +28,22 @@ public class Serial {
         return resultArray;
     }
 
+    public static int[] insertionSort(){
+        int[] resultArray = SortArray.clone();
+
+        for (int i = 1; i < size; i++) {
+            int current = resultArray[i];
+            int j = i - 1;
+            while (j >= 0 && resultArray[j] > current) {
+                resultArray[j + 1] = resultArray[j];
+                j -= 1 ;
+            }
+            resultArray[j + 1] = current;
+        }
+
+        return resultArray;
+    }
+
     public static int[] mergeSort(){
         int[] resultArray = SortArray.clone();
 
