@@ -2,7 +2,7 @@ import java.util.Arrays;
 
 public class Serial {
     static int size;
-    static int[] SortArray = new int[size];
+    static int[] SortArray = new int[size];   
     public Serial(int[] baseArray) {
         SortArray = baseArray.clone();
         size = SortArray.length;
@@ -104,8 +104,12 @@ public class Serial {
 
         int i = 0, j = 0, k = left;
         while (i < n1 && j < n2) {
-            if (L[i] <= R[j]) array[k++] = L[i++];
-            else array[k++] = R[j++];
+            if (L[i] <= R[j]){
+                array[k++] = L[i++];
+            }
+            else {
+                array[k++] = R[j++];
+            };
         }
 
         while (i < n1){

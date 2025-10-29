@@ -3,9 +3,12 @@ import java.util.Arrays;
 public class Parallel {
     static int size;
     static int[] SortArray = new int[size];
-    public Parallel(int[] baseArray) {
+    static int threads;
+
+    public Parallel(int[] baseArray, int numThreads) {
         SortArray = baseArray.clone();
         size = SortArray.length;
+        threads = numThreads;
     }   
 
     private static void print(int[] array, long time) { 
@@ -99,15 +102,25 @@ public class Parallel {
         int[] resultArray = SortArray.clone();
         long start = System.currentTimeMillis();
 
-        quickParallel(resultArray);
+        quickParallel(resultArray, 0, size -1);
         
         long end = System.currentTimeMillis();
         print(resultArray, end - start);
     }
 
-    private static void quickParallel(int[] array){
-        
+    private static void quickParallel(int[] array, int high, int low){
+        if (low < high) {
+            int pivot = Serial.partitioning(array, low, high);
+            Thread left = new Thread(() -> Serial.quickSort(array, low, pivot - 1));
+            Thread right = new Thread(() -> Serial.quickSort(array, pivot + 1, high));
+            left.start();
+            right.start();
+            try {
+                left.join();
+                right.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }   
     }
-
-    
 }
