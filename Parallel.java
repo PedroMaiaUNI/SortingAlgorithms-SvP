@@ -10,7 +10,7 @@ public class Parallel {
 
     private static void print(int[] array, long time) { 
         System.out.println(Arrays.toString(array));
-        System.out.println(time);
+        System.out.println("TEMPO: "+ time + "ms");
     }
 
     public void run() {
@@ -34,46 +34,79 @@ public class Parallel {
     //  2. inicia cronometro
     //  3. logica do algoritmo
     //  4. fecha e print cronometro e array organizado
-    //  5. retorna o novo array
 
     public static void bubbleSort(){
         int[] resultArray = SortArray.clone();
         long start = System.currentTimeMillis();
 
-        //LOGICA
+        bubbleParallel(resultArray);
 
         long end = System.currentTimeMillis();
         print(resultArray, end - start);
+    }
+
+    private static void bubbleParallel(int[] array){
+
     }
 
     public static void insertionSort(){
         int[] resultArray = SortArray.clone();
         long start = System.currentTimeMillis();
 
-        //LOGICA
+        insertionParallel(resultArray);
 
         long end = System.currentTimeMillis();
         print(resultArray, end - start);
+    }
+
+    private static void insertionParallel(int[] array){
+
     }
 
     public static void mergeSort(){
         int[] resultArray = SortArray.clone();
         long start = System.currentTimeMillis();
 
-        //LOGICA
+        mergeParallel(resultArray, 0, size-1);
         
         long end = System.currentTimeMillis();
         print(resultArray, end - start);
     }  
 
+    public static void mergeParallel(int[] array, int left, int right){
+        if (left < right) {
+            int mid = (left + right) / 2;
+
+            Thread leftThread = new Thread(() -> Serial.mergeSort(array, left, mid));
+            Thread rightThread = new Thread(() -> Serial.mergeSort(array, mid + 1, right));
+
+            leftThread.start();
+            rightThread.start();
+            try {
+                leftThread.join();
+                rightThread.join();
+            } 
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            Serial.merge(array, left, mid, right);
+        }
+
+    }
+
     public static void quickSort(){
         int[] resultArray = SortArray.clone();
         long start = System.currentTimeMillis();
 
-        //LOGICA
+        quickParallel(resultArray);
         
         long end = System.currentTimeMillis();
         print(resultArray, end - start);
+    }
+
+    private static void quickParallel(int[] array){
+        
     }
 
     

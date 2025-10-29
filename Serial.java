@@ -10,7 +10,7 @@ public class Serial {
 
     private static void print(int[] array, long time) { 
         System.out.println(Arrays.toString(array));
-        System.out.println(time);
+        System.out.println("TEMPO: "+ time + "ms");
     }
 
     public void run() {
@@ -34,7 +34,6 @@ public class Serial {
     //  2. inicia cronometro
     //  3. logica do algoritmo
     //  4. fecha e print cronometro e array organizado
-    //  5. retorna o novo array
 
     public static void bubbleSort(){
         int[] resultArray = SortArray.clone();
@@ -84,7 +83,7 @@ public class Serial {
         print(resultArray, end - start);
     }    
 
-    private static void mergeSort(int[] array, int left, int right){
+    public static void mergeSort(int[] array, int left, int right){
         if (left < right) {
             int mid = left + (right - left) / 2;
             mergeSort(array, left, mid);
@@ -93,7 +92,7 @@ public class Serial {
         }
     }
 
-    private static void merge(int[] array, int left, int mid, int right){
+    public static void merge(int[] array, int left, int mid, int right){
         int n1 = mid - left + 1;
         int n2 = right - mid;
 
@@ -127,7 +126,7 @@ public class Serial {
         print(resultArray, end - start);
     }
 
-    private static void quickSort(int[] array, int low, int high){
+    public static void quickSort(int[] array, int low, int high){
         if (low<high) {
             int pi = partitioning(array, low, high);
             quickSort(array, low, pi - 1);
@@ -135,7 +134,7 @@ public class Serial {
         }
     }
 
-    private static int partitioning(int[] array, int low, int high){
+    public static int partitioning(int[] array, int low, int high){
         int pivot = array[high];
         int i = low - 1;
         int swap;
