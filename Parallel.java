@@ -2,13 +2,13 @@ import java.util.Arrays;
 
 public class Parallel {
     static int size;
-    static int[] SortArray = new int[size];
-    static int threads;
+    static int[] SortArray;
+    static int numThreads;
 
-    public Parallel(int[] baseArray, int numThreads) {
+    public Parallel(int[] baseArray, int nThreads) {
         SortArray = baseArray.clone();
         size = SortArray.length;
-        threads = numThreads;
+        numThreads = nThreads;
     }   
 
     private static void print(int[] array, long time) { 
@@ -49,7 +49,45 @@ public class Parallel {
     }
 
     private static void bubbleParallel(int[] array){
+        //Odd-Even Transposition Sort:
+        //valores são comparados em pares ao mesmo tempo
+        //a cada passo, altera entre (indice par, indice impar) para (indice impar, indice par)
+        for (int phase = 0; phase < size; phase++) {
+            int startIndex = (phase % 2 == 0) ? 0 : 1;
 
+            Thread[] threads = new Thread[numThreads];
+            int chunkSize = (int) Math.ceil((size / 2) / numThreads);
+
+            for (int t = 0; t < numThreads; t++) {
+                int startPair = t * chunkSize;
+                int endPair;
+                if (t == numThreads-1){
+                    endPair = size/2;
+                }else{
+                    endPair = startPair + chunkSize;
+                }
+
+                threads[t] = new Thread(() -> {
+                    for (int i = startIndex + 2 * startPair; i < Math.min(size - 1, startIndex + 2 * endPair); i += 2) {
+                        if (array[i] > array[i + 1]) {
+                            //bubble:
+                            int temp = array[i];
+                            array[i] = array[i + 1];
+                            array[i + 1] = temp;
+                        }
+                    }
+                });
+                threads[t].start();
+            }
+
+            for (Thread thread : threads) {
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     public static void insertionSort(){
@@ -63,7 +101,51 @@ public class Parallel {
     }
 
     private static void insertionParallel(int[] array){
+        //Esse algoritmo é dado como impossível de se paralelizar
+        //Ainda assim, vou fazer uma leve tentativa de implementar só para verificar se há algum ganho de desempenho
+        //paralelizando a busca pelo indice a ser colocado o valor
 
+        for (int i = 1; i < size; i++) {
+            int key = array[i];
+            int chunkSize = Math.max(1, i / numThreads);
+            Thread[] threads = new Thread[numThreads];
+            int[] localBest = new int[numThreads];
+            Arrays.fill(localBest, -1); 
+
+            for (int t = 0; t < numThreads; t++) {
+                final int threadId = t;
+                int startIdx = t * chunkSize;
+                int endIdx = Math.min(startIdx + chunkSize, i);
+
+                threads[t] = new Thread(() -> {
+                    for (int j = endIdx - 1; j >= startIdx; j--) {
+                        if (array[j] <= key) {
+                            localBest[threadId] = j;
+                            break;
+                        }
+                    }
+                });
+                threads[t].start();
+            }
+
+            for (Thread thread : threads) {
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            int bestIndex = -1;
+            for (int idx : localBest) {
+                if (idx > bestIndex) bestIndex = idx;
+            }
+
+            for (int j = i - 1; j > bestIndex; j--) {
+                array[j + 1] = array[j];
+            }
+            array[bestIndex + 1] = key;
+        }
     }
 
     public static void mergeSort(){
@@ -108,7 +190,7 @@ public class Parallel {
         print(resultArray, end - start);
     }
 
-    private static void quickParallel(int[] array, int high, int low){
+    private static void quickParallel(int[] array, int low, int high){
         if (low < high) {
             int pivot = Serial.partitioning(array, low, high);
             Thread left = new Thread(() -> Serial.quickSort(array, low, pivot - 1));

@@ -2,7 +2,7 @@ import java.util.Arrays;
 
 public class Serial {
     static int size;
-    static int[] SortArray = new int[size];   
+    static int[] SortArray;   
     public Serial(int[] baseArray) {
         SortArray = baseArray.clone();
         size = SortArray.length;
