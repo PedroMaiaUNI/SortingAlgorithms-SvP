@@ -102,7 +102,8 @@ public class Parallel {
 
     private static void insertionParallel(int[] array){
         //Esse algoritmo é dado como impossível de se paralelizar
-        //Ainda assim, vou fazer uma leve tentativa de implementar só para verificar se há algum ganho de desempenho
+        //Ainda assim, vou fazer uma leve tentativa de implementar
+        // só para verificar se há algum ganho de desempenho
         //paralelizando a busca pelo indice a ser colocado o valor
 
         for (int i = 1; i < size; i++) {
@@ -162,8 +163,8 @@ public class Parallel {
         if (left < right) {
             int mid = (left + right) / 2;
 
-            Thread leftThread = new Thread(() -> Serial.mergeSort(array, left, mid));
-            Thread rightThread = new Thread(() -> Serial.mergeSort(array, mid + 1, right));
+            Thread leftThread = new Thread(() -> mergeParallel(array, left, mid));
+            Thread rightThread = new Thread(() -> mergeParallel(array, mid + 1, right));
 
             leftThread.start();
             rightThread.start();
@@ -184,24 +185,30 @@ public class Parallel {
         int[] resultArray = SortArray.clone();
         long start = System.currentTimeMillis();
 
-        quickParallel(resultArray, 0, size -1);
+        quickParallel(resultArray, 0, size -1, numThreads);
         
         long end = System.currentTimeMillis();
         print(resultArray, end - start);
     }
 
-    private static void quickParallel(int[] array, int low, int high){
+    private static void quickParallel(int[] array, int low, int high, int nThreads){
         if (low < high) {
             int pivot = Serial.partitioning(array, low, high);
-            Thread left = new Thread(() -> Serial.quickSort(array, low, pivot - 1));
-            Thread right = new Thread(() -> Serial.quickSort(array, pivot + 1, high));
-            left.start();
-            right.start();
-            try {
-                left.join();
-                right.join();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+
+            if(nThreads <= 1){
+                quickParallel(array, low, pivot - 1, 1);
+                quickParallel(array, pivot + 1, high, 1);
+            } else{
+                Thread left = new Thread(() -> quickParallel(array, low, pivot - 1, nThreads/2));
+                Thread right = new Thread(() -> quickParallel(array, pivot + 1, high, nThreads/2));
+                left.start();
+                right.start();
+                try {
+                    left.join();
+                    right.join();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
             }
         }   
     }
