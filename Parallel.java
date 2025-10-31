@@ -11,9 +11,15 @@ public class Parallel {
         numThreads = nThreads;
     }   
 
-    private static void print(int[] array, long time) { 
-        System.out.println(Arrays.toString(array));
-        System.out.println("TEMPO: "+ time + "ms");
+    private static boolean isSorted(int[] arr) {
+        for (int i = 1; i < arr.length; i++) {
+            if (arr[i - 1] > arr[i]) {
+                System.err.printf("❌ Erro: array não está ordenado na posição %d (valores %d e %d)%n",
+                        i - 1, arr[i - 1], arr[i]);
+                return false;
+            }
+        }
+        return true;
     }
 
     public void run() {
@@ -36,16 +42,17 @@ public class Parallel {
     //  1. monta o novo array que vai ser retornado
     //  2. inicia cronometro
     //  3. logica do algoritmo
-    //  4. fecha e print cronometro e array organizado
+    //  4. retorna cronometro
 
-    public static void bubbleSort(){
+    public static long bubbleSort(){
         int[] resultArray = SortArray.clone();
         long start = System.currentTimeMillis();
 
         bubbleParallel(resultArray);
 
         long end = System.currentTimeMillis();
-        print(resultArray, end - start);
+        isSorted(resultArray);
+        return end - start;
     }
 
     private static void bubbleParallel(int[] array){
@@ -90,14 +97,15 @@ public class Parallel {
         }
     }
 
-    public static void insertionSort(){
+    public static long insertionSort(){
         int[] resultArray = SortArray.clone();
         long start = System.currentTimeMillis();
 
         insertionParallel(resultArray);
 
         long end = System.currentTimeMillis();
-        print(resultArray, end - start);
+        isSorted(resultArray);
+        return end - start;
     }
 
     private static void insertionParallel(int[] array){
@@ -108,12 +116,17 @@ public class Parallel {
 
         for (int i = 1; i < size; i++) {
             int key = array[i];
-            int chunkSize = Math.max(1, i / numThreads);
-            Thread[] threads = new Thread[numThreads];
-            int[] localBest = new int[numThreads];
-            Arrays.fill(localBest, -1); 
 
-            for (int t = 0; t < numThreads; t++) {
+            int threadsToUse = Math.min(numThreads, i); // não usar mais threads que elementos
+            if (threadsToUse <= 0) threadsToUse = 1;
+
+            int chunkSize = (int) Math.ceil(i / (double) threadsToUse);
+
+            Thread[] threads = new Thread[threadsToUse];
+            int[] localBest = new int[threadsToUse];
+            for (int t = 0; t < threadsToUse; t++) localBest[t] = -1;
+
+            for (int t = 0; t < threadsToUse; t++) {
                 final int threadId = t;
                 int startIdx = t * chunkSize;
                 int endIdx = Math.min(startIdx + chunkSize, i);
@@ -129,17 +142,14 @@ public class Parallel {
                 threads[t].start();
             }
 
-            for (Thread thread : threads) {
-                try {
-                    thread.join();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            for (int t = 0; t < threadsToUse; t++) {
+                try { threads[t].join(); }
+                catch (InterruptedException e) { Thread.currentThread().interrupt(); }
             }
 
             int bestIndex = -1;
-            for (int idx : localBest) {
-                if (idx > bestIndex) bestIndex = idx;
+            for (int t = 0; t < threadsToUse; t++) {
+                if (localBest[t] > bestIndex) bestIndex = localBest[t];
             }
 
             for (int j = i - 1; j > bestIndex; j--) {
@@ -149,14 +159,15 @@ public class Parallel {
         }
     }
 
-    public static void mergeSort(){
+    public static long mergeSort(){
         int[] resultArray = SortArray.clone();
         long start = System.currentTimeMillis();
 
         mergeParallel(resultArray, 0, size-1);
         
         long end = System.currentTimeMillis();
-        print(resultArray, end - start);
+        isSorted(resultArray);
+        return end - start;
     }  
 
     public static void mergeParallel(int[] array, int left, int right){
@@ -181,14 +192,15 @@ public class Parallel {
 
     }
 
-    public static void quickSort(){
+    public static long quickSort(){
         int[] resultArray = SortArray.clone();
         long start = System.currentTimeMillis();
 
         quickParallel(resultArray, 0, size -1, numThreads);
         
         long end = System.currentTimeMillis();
-        print(resultArray, end - start);
+        isSorted(resultArray);
+        return end - start;
     }
 
     private static void quickParallel(int[] array, int low, int high, int nThreads){

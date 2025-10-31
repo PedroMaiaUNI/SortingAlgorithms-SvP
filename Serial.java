@@ -8,25 +8,23 @@ public class Serial {
         size = SortArray.length;
     }   
 
-    private static void print(int[] array, long time) { 
-        System.out.println(Arrays.toString(array));
-        System.out.println("TEMPO: "+ time + "ms");
+    private static boolean isSorted(int[] arr) {
+        for (int i = 1; i < arr.length; i++) {
+            if (arr[i - 1] > arr[i]) {
+                System.err.printf("❌ Erro: array não está ordenado na posição %d (valores %d e %d)%n",
+                        i - 1, arr[i - 1], arr[i]);
+                return false;
+            }
+        }
+        return true;
     }
 
     public void run() {
-        System.out.println("--- EXECUTANDO ALGORITMOS SERIAIS ---");
-
-        System.out.println("1. BUBBLE SORT");
         bubbleSort();
-        System.out.println("2. INSERTION SORT");
         insertionSort();
-        System.out.println("3. MERGE SORT");
         mergeSort();
-        System.out.println("4. QUICK SORT");
         quickSort();
 
-
-        System.out.println("\n--- FIM DAS EXECUÇÕES SERIAIS --- ");
     }
 
     //estrutura basica das funções:
@@ -35,27 +33,28 @@ public class Serial {
     //  3. logica do algoritmo
     //  4. fecha e print cronometro e array organizado
 
-    public static void bubbleSort(){
+    public static long bubbleSort(){
         int[] resultArray = SortArray.clone();
         long start = System.currentTimeMillis();
 
         int swap;
 
         for(int i = 0; i<size-1; i++){
-            for(int j = 0; i<size-1; i++){
-                if(resultArray[i] > resultArray[j]){
-                    swap = resultArray[i];
-                    resultArray[i] = resultArray[j];
-                    resultArray[j] = swap;
+            for(int j = 0; j<size - i- 1; j++){
+                if(resultArray[j] > resultArray[j+1]){
+                    swap = resultArray[j];
+                    resultArray[j] = resultArray[j+1];
+                    resultArray[j+1] = swap;
                 }
             }
         }
 
         long end = System.currentTimeMillis();
-        print(resultArray, end - start);
+        isSorted(resultArray);
+        return end - start;
     }
 
-    public static void insertionSort(){
+    public static long insertionSort(){
         int[] resultArray = SortArray.clone();
         long start = System.currentTimeMillis();
 
@@ -70,17 +69,19 @@ public class Serial {
         }
 
         long end = System.currentTimeMillis();
-        print(resultArray, end - start);
+        isSorted(resultArray);
+        return end - start;
     }
 
-    public static void mergeSort(){
+    public static long mergeSort(){
         int[] resultArray = SortArray.clone();
         long start = System.currentTimeMillis();
 
-        mergeSort(SortArray, 0, size/2);
+        mergeSort(resultArray, 0, size-1);
         
         long end = System.currentTimeMillis();
-        print(resultArray, end - start);
+        isSorted(resultArray);
+        return end - start;
     }    
 
     public static void mergeSort(int[] array, int left, int right){
@@ -120,23 +121,39 @@ public class Serial {
         } 
     }
 
-    public static void quickSort(){
+    public static long quickSort(){
         int[] resultArray = SortArray.clone();
         long start = System.currentTimeMillis();
 
         quickSort(resultArray, 0, size - 1);
         
         long end = System.currentTimeMillis();
-        print(resultArray, end - start);
+        isSorted(resultArray);
+        return end - start;
     }
 
-    public static void quickSort(int[] array, int low, int high){
-        if (low<high) {
+    public static void quickSort(int[] array, int low, int high) {
+        while (low < high) {
             int pi = partitioning(array, low, high);
-            quickSort(array, low, pi - 1);
-            quickSort(array, pi + 1 ,high);
+
+            // Evita recursão infinita
+            if (pi == high) {
+                high--;
+            } else if (pi == low) {
+                low++;
+            } else {
+                // Chama recursivamente apenas na menor partição (otimização tail recursion)
+                if (pi - low < high - pi) {
+                    quickSort(array, low, pi - 1);
+                    low = pi + 1;
+                } else {
+                    quickSort(array, pi + 1, high);
+                    high = pi - 1;
+                }
+            }
         }
     }
+
 
     public static int partitioning(int[] array, int low, int high){
         int pivot = array[high];
