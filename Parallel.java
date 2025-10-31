@@ -1,14 +1,19 @@
 import java.util.Arrays;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveAction;
+import java.util.stream.IntStream;
 
 public class Parallel {
     static int size;
     static int[] SortArray;
     static int numThreads;
+    static ForkJoinPool pool;
 
     public Parallel(int[] baseArray, int nThreads) {
         SortArray = baseArray.clone();
         size = SortArray.length;
         numThreads = nThreads;
+        pool = new ForkJoinPool(numThreads);
     }   
 
     private static boolean isSorted(int[] arr) {
@@ -59,42 +64,26 @@ public class Parallel {
         //Odd-Even Transposition Sort:
         //valores são comparados em pares ao mesmo tempo
         //a cada passo, altera entre (indice par, indice impar) para (indice impar, indice par)
+        ForkJoinPool pool = new ForkJoinPool(numThreads);
+
         for (int phase = 0; phase < size; phase++) {
             int startIndex = (phase % 2 == 0) ? 0 : 1;
 
-            Thread[] threads = new Thread[numThreads];
-            int chunkSize = (int) Math.ceil((size / 2) / numThreads);
-
-            for (int t = 0; t < numThreads; t++) {
-                int startPair = t * chunkSize;
-                int endPair;
-                if (t == numThreads-1){
-                    endPair = size/2;
-                }else{
-                    endPair = startPair + chunkSize;
-                }
-
-                threads[t] = new Thread(() -> {
-                    for (int i = startIndex + 2 * startPair; i < Math.min(size - 1, startIndex + 2 * endPair); i += 2) {
-                        if (array[i] > array[i + 1]) {
-                            //bubble:
-                            int temp = array[i];
-                            array[i] = array[i + 1];
-                            array[i + 1] = temp;
-                        }
-                    }
-                });
-                threads[t].start();
-            }
-
-            for (Thread thread : threads) {
-                try {
-                    thread.join();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+            pool.submit(() -> 
+                IntStream.range(startIndex, size - 1)
+                        .parallel()
+                        .filter(i -> i % 2 == startIndex % 2)
+                        .forEach(i -> {
+                            if (array[i] > array[i + 1]) {
+                                int tmp = array[i];
+                                array[i] = array[i + 1];
+                                array[i + 1] = tmp;
+                            }
+                        })
+            ).join();
         }
+
+        pool.shutdown();
     }
 
     public static long insertionSort(){
@@ -114,123 +103,116 @@ public class Parallel {
         // só para verificar se há algum ganho de desempenho
         //paralelizando a busca pelo indice a ser colocado o valor
 
+        ForkJoinPool pool = new ForkJoinPool(numThreads);
+
         for (int i = 1; i < size; i++) {
             int key = array[i];
 
-            int threadsToUse = Math.min(numThreads, i); // não usar mais threads que elementos
-            if (threadsToUse <= 0) threadsToUse = 1;
-
+            int threadsToUse = Math.min(numThreads, i);
             int chunkSize = (int) Math.ceil(i / (double) threadsToUse);
 
-            Thread[] threads = new Thread[threadsToUse];
             int[] localBest = new int[threadsToUse];
-            for (int t = 0; t < threadsToUse; t++) localBest[t] = -1;
+            Arrays.fill(localBest, -1);
 
-            for (int t = 0; t < threadsToUse; t++) {
-                final int threadId = t;
-                int startIdx = t * chunkSize;
-                int endIdx = Math.min(startIdx + chunkSize, i);
+            int index = i;
 
-                threads[t] = new Thread(() -> {
-                    for (int j = endIdx - 1; j >= startIdx; j--) {
-                        if (array[j] <= key) {
-                            localBest[threadId] = j;
-                            break;
+            pool.submit(() ->
+                IntStream.range(0, threadsToUse).parallel().forEach(t -> {
+                    int start = t * chunkSize;
+                    int end = Math.min(start + chunkSize, index);
+
+                    int low = start, high = end - 1, found = -1;
+                    while (low <= high) {
+                        int mid = (low + high) >>> 1;
+                        if (array[mid] <= key) {
+                            found = mid;
+                            low = mid + 1;
+                        } else {
+                            high = mid - 1;
                         }
                     }
-                });
-                threads[t].start();
-            }
-
-            for (int t = 0; t < threadsToUse; t++) {
-                try { threads[t].join(); }
-                catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-            }
+                    localBest[t] = found;
+                })
+            ).join();
 
             int bestIndex = -1;
-            for (int t = 0; t < threadsToUse; t++) {
-                if (localBest[t] > bestIndex) bestIndex = localBest[t];
-            }
+            for (int idx : localBest) if (idx > bestIndex) bestIndex = idx;
 
-            for (int j = i - 1; j > bestIndex; j--) {
-                array[j + 1] = array[j];
-            }
+            for (int j = i - 1; j > bestIndex; j--) array[j + 1] = array[j];
             array[bestIndex + 1] = key;
         }
+
+        pool.shutdown();
     }
 
     public static long mergeSort(){
         int[] resultArray = SortArray.clone();
         long start = System.nanoTime();
 
-        mergeParallel(resultArray, 0, size-1, numThreads);
+        pool.invoke(new MergeParallel(resultArray, 0, size - 1));
         
         long end = System.nanoTime();
         isSorted(resultArray);
         return (end - start) ;
     }  
 
-    public static void mergeParallel(int[] array, int left, int right, int nThreads){
-        if (left < right) {
-            if (nThreads <= 1) {
+    static class MergeParallel extends RecursiveAction {
+        int[] array;
+        int left, right;
+        static final int THRESHOLD = 10_000;
+
+        MergeParallel(int[] array, int left, int right) {
+            this.array = array;
+            this.left = left;
+            this.right = right;
+        }
+
+        @Override
+        protected void compute() {
+            if (right - left < THRESHOLD) {
                 Serial.mergeSort(array, left, right);
                 return;
             }
-
             int mid = (left + right) / 2;
-
-            Thread leftThread = new Thread(() -> mergeParallel(array, left, mid, nThreads/2));
-            Thread rightThread = new Thread(() -> mergeParallel(array, mid + 1, right, nThreads/2));
-
-            leftThread.start();
-            rightThread.start();
-            try {
-                leftThread.join();
-                rightThread.join();
-            } 
-            catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
+            MergeParallel t1 = new MergeParallel(array, left, mid);
+            MergeParallel t2 = new MergeParallel(array, mid + 1, right);
+            invokeAll(t1, t2);
             Serial.merge(array, left, mid, right);
         }
-
     }
 
     public static long quickSort(){
         int[] resultArray = SortArray.clone();
         long start = System.nanoTime();
 
-        quickParallel(resultArray, 0, size -1, numThreads);
+        pool.invoke(new QuickParallel(resultArray, 0, size - 1));
         
         long end = System.nanoTime();
         isSorted(resultArray);
         return (end - start) ;
     }
 
-    private static void quickParallel(int[] array, int low, int high, int nThreads){
-        if (low < high) {
-            if (nThreads <= 1) {
+    static class QuickParallel extends RecursiveAction {
+        int[] array;
+        int low, high;
+        static final int THRESHOLD = 10_000;
+
+        QuickParallel(int[] array, int low, int high) {
+            this.array = array;
+            this.low = low;
+            this.high = high;
+        }
+
+        @Override
+        protected void compute() {
+            if (high - low < THRESHOLD) {
                 Serial.quickSort(array, low, high);
                 return;
             }
             int pivot = Serial.partitioning(array, low, high);
-
-            if(nThreads <= 1){
-                quickParallel(array, low, pivot - 1, 1);
-                quickParallel(array, pivot + 1, high, 1);
-            } else{
-                Thread left = new Thread(() -> quickParallel(array, low, pivot - 1, nThreads/2));
-                Thread right = new Thread(() -> quickParallel(array, pivot + 1, high, nThreads/2));
-                left.start();
-                right.start();
-                try {
-                    left.join();
-                    right.join();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }   
+            QuickParallel left = new QuickParallel(array, low, pivot - 1);
+            QuickParallel right = new QuickParallel(array, pivot + 1, high);
+            invokeAll(left, right);
+        }
     }
 }

@@ -1,5 +1,3 @@
-import java.util.Arrays;
-
 public class Serial {
     static int size;
     static int[] SortArray;   
@@ -134,21 +132,19 @@ public class Serial {
 
     public static void quickSort(int[] array, int low, int high) {
         while (low < high) {
-            int pi = partitioning(array, low, high);
+            int pivot = partitioning(array, low, high);
 
-            // Evita recursão infinita
-            if (pi == high) {
+            if (pivot == high) {
                 high--;
-            } else if (pi == low) {
+            } else if (pivot == low) {
                 low++;
             } else {
-                // Chama recursivamente apenas na menor partição (otimização tail recursion)
-                if (pi - low < high - pi) {
-                    quickSort(array, low, pi - 1);
-                    low = pi + 1;
+                if (pivot - low < high - pivot) {
+                    quickSort(array, low, pivot - 1);
+                    low = pivot + 1;
                 } else {
-                    quickSort(array, pi + 1, high);
-                    high = pi - 1;
+                    quickSort(array, pivot + 1, high);
+                    high = pivot - 1;
                 }
             }
         }
