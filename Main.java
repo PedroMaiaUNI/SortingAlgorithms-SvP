@@ -3,7 +3,7 @@ import java.util.*;
 
 public class Main {
 
-    private static final int[] data_sizes = {100, 1000, 10_000};
+    private static final int[] data_sizes = {1000, 10000, 100000};
     private static final int[] threads_total = {2, 4, 8};
     private static final int samples = 5;
     private static final String[] algorithms = {"bubble", "merge", "quick", "insertion"};
@@ -57,7 +57,6 @@ public class Main {
         }
     }
 
-    // === Métodos auxiliares ===
 
     private static int[] generateRandomArray(int size) {
         Random rand = new Random();
@@ -87,8 +86,9 @@ public class Main {
     }
 
     private static void printProgress(int done, int total, String algo, String type, int threads, long time) {
-        System.out.printf("Tarefa %d de %d | %-8s | %-8s | Threads: %-2d | Tempo: %d ms%n",
-                done, total, type, algo, threads, time);
+        float miliTime = (float) time/1000000;
+        System.out.printf("Tarefa %d de %d \t| %-8s | %-9s | Threads: %-2d | Tempo: %.3f ms%n",
+                done, total, type, algo, threads, miliTime);
     }
 }
 

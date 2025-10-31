@@ -35,7 +35,7 @@ public class Serial {
 
     public static long bubbleSort(){
         int[] resultArray = SortArray.clone();
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
 
         int swap;
 
@@ -49,14 +49,14 @@ public class Serial {
             }
         }
 
-        long end = System.currentTimeMillis();
+        long end = System.nanoTime();
         isSorted(resultArray);
-        return end - start;
+        return (end - start) ;
     }
 
     public static long insertionSort(){
         int[] resultArray = SortArray.clone();
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
 
         for (int i = 1; i < size; i++) {
             int current = resultArray[i];
@@ -68,20 +68,20 @@ public class Serial {
             resultArray[j + 1] = current;
         }
 
-        long end = System.currentTimeMillis();
+        long end = System.nanoTime();
         isSorted(resultArray);
-        return end - start;
+        return (end - start) ;
     }
 
     public static long mergeSort(){
         int[] resultArray = SortArray.clone();
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
 
         mergeSort(resultArray, 0, size-1);
         
-        long end = System.currentTimeMillis();
+        long end = System.nanoTime();
         isSorted(resultArray);
-        return end - start;
+        return (end - start) ;
     }    
 
     public static void mergeSort(int[] array, int left, int right){
@@ -123,13 +123,13 @@ public class Serial {
 
     public static long quickSort(){
         int[] resultArray = SortArray.clone();
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
 
         quickSort(resultArray, 0, size - 1);
         
-        long end = System.currentTimeMillis();
+        long end = System.nanoTime();
         isSorted(resultArray);
-        return end - start;
+        return (end - start) ;
     }
 
     public static void quickSort(int[] array, int low, int high) {

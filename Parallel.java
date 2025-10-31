@@ -46,13 +46,13 @@ public class Parallel {
 
     public static long bubbleSort(){
         int[] resultArray = SortArray.clone();
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
 
         bubbleParallel(resultArray);
 
-        long end = System.currentTimeMillis();
+        long end = System.nanoTime();
         isSorted(resultArray);
-        return end - start;
+        return (end - start) ;
     }
 
     private static void bubbleParallel(int[] array){
@@ -99,13 +99,13 @@ public class Parallel {
 
     public static long insertionSort(){
         int[] resultArray = SortArray.clone();
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
 
         insertionParallel(resultArray);
 
-        long end = System.currentTimeMillis();
+        long end = System.nanoTime();
         isSorted(resultArray);
-        return end - start;
+        return (end - start) ;
     }
 
     private static void insertionParallel(int[] array){
@@ -161,21 +161,26 @@ public class Parallel {
 
     public static long mergeSort(){
         int[] resultArray = SortArray.clone();
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
 
-        mergeParallel(resultArray, 0, size-1);
+        mergeParallel(resultArray, 0, size-1, numThreads);
         
-        long end = System.currentTimeMillis();
+        long end = System.nanoTime();
         isSorted(resultArray);
-        return end - start;
+        return (end - start) ;
     }  
 
-    public static void mergeParallel(int[] array, int left, int right){
+    public static void mergeParallel(int[] array, int left, int right, int nThreads){
         if (left < right) {
+            if (nThreads <= 1) {
+                Serial.mergeSort(array, left, right);
+                return;
+            }
+
             int mid = (left + right) / 2;
 
-            Thread leftThread = new Thread(() -> mergeParallel(array, left, mid));
-            Thread rightThread = new Thread(() -> mergeParallel(array, mid + 1, right));
+            Thread leftThread = new Thread(() -> mergeParallel(array, left, mid, nThreads/2));
+            Thread rightThread = new Thread(() -> mergeParallel(array, mid + 1, right, nThreads/2));
 
             leftThread.start();
             rightThread.start();
@@ -194,17 +199,21 @@ public class Parallel {
 
     public static long quickSort(){
         int[] resultArray = SortArray.clone();
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
 
         quickParallel(resultArray, 0, size -1, numThreads);
         
-        long end = System.currentTimeMillis();
+        long end = System.nanoTime();
         isSorted(resultArray);
-        return end - start;
+        return (end - start) ;
     }
 
     private static void quickParallel(int[] array, int low, int high, int nThreads){
         if (low < high) {
+            if (nThreads <= 1) {
+                Serial.quickSort(array, low, high);
+                return;
+            }
             int pivot = Serial.partitioning(array, low, high);
 
             if(nThreads <= 1){
