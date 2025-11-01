@@ -11,7 +11,7 @@ public class Main {
 
     public static void main(String[] args) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(CSV_FILE))) {
-            writer.println("Type,Algorithm,DataSize,Threads,Sample,Time(ms)");
+            writer.println("Type,Algorithm,DataSize,Threads,Sample,Time(ns)");
 
             int totalTasks = data_sizes.length * algorithms.length * (1 + threads_total.length) * samples;
             int completedTasks = 0;
