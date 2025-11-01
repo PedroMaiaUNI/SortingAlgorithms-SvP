@@ -3,7 +3,7 @@ import java.util.*;
 
 public class Main {
 
-    private static final int[] data_sizes = {1000, 10000, 100000};
+    private static final int[] data_sizes = {100, 1000, 10000, 100000, 1000000};
     private static final int[] threads_total = {2, 4, 8};
     private static final int samples = 5;
     private static final String[] algorithms = {"bubble", "merge", "quick", "insertion"};
